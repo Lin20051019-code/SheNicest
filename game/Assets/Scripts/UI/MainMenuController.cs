@@ -18,14 +18,21 @@ namespace SheNicest.UI
         [Header("Panel References")]
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private GameObject creditsPanel;
+        [SerializeField] private Button panelClickCatcher;
 
         [Header("Scene Names")]
-        [SerializeField] private string gameSceneName = "GameScene";
+        [SerializeField] private string gameSceneName = "CharacterSelectScene";
+
+        [Header("Settings Controls")]
+        [SerializeField] private Slider bgmVolumeSlider;
+        [SerializeField] private Slider sfxVolumeSlider;
+        [SerializeField] private Dropdown resolutionDropdown;
 
         private void Start()
         {
             BindButtons();
             CloseAllPanels();
+            InitSettings();
         }
 
         private void BindButtons()
@@ -41,6 +48,9 @@ namespace SheNicest.UI
 
             if (exitGameButton != null)
                 exitGameButton.onClick.AddListener(OnExitGame);
+
+            if (panelClickCatcher != null)
+                panelClickCatcher.onClick.AddListener(CloseAllPanels);
         }
 
         private void OnDestroy()
@@ -56,6 +66,18 @@ namespace SheNicest.UI
 
             if (exitGameButton != null)
                 exitGameButton.onClick.RemoveListener(OnExitGame);
+
+            if (bgmVolumeSlider != null)
+                bgmVolumeSlider.onValueChanged.RemoveListener(OnBGMVolumeChanged);
+
+            if (sfxVolumeSlider != null)
+                sfxVolumeSlider.onValueChanged.RemoveListener(OnSFXVolumeChanged);
+
+            if (resolutionDropdown != null)
+                resolutionDropdown.onValueChanged.RemoveListener(OnResolutionChanged);
+
+            if (panelClickCatcher != null)
+                panelClickCatcher.onClick.RemoveListener(CloseAllPanels);
         }
 
         private void OnStartGame()
@@ -75,6 +97,8 @@ namespace SheNicest.UI
             CloseAllPanels();
             if (settingsPanel != null)
                 settingsPanel.SetActive(true);
+            if (panelClickCatcher != null)
+                panelClickCatcher.gameObject.SetActive(true);
         }
 
         private void OnCredits()
@@ -82,6 +106,8 @@ namespace SheNicest.UI
             CloseAllPanels();
             if (creditsPanel != null)
                 creditsPanel.SetActive(true);
+            if (panelClickCatcher != null)
+                panelClickCatcher.gameObject.SetActive(true);
         }
 
         private void OnExitGame()
@@ -103,6 +129,53 @@ namespace SheNicest.UI
 
             if (creditsPanel != null)
                 creditsPanel.SetActive(false);
+
+            if (panelClickCatcher != null)
+                panelClickCatcher.gameObject.SetActive(false);
+        }
+
+        private void InitSettings()
+        {
+            // 初始化滑条值并绑定回调
+            if (bgmVolumeSlider != null)
+            {
+                bgmVolumeSlider.value = GameSettings.BGMVolume;
+                bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
+            }
+
+            if (sfxVolumeSlider != null)
+            {
+                sfxVolumeSlider.value = GameSettings.SFXVolume;
+                sfxVolumeSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
+            }
+
+            // 初始化分辨率下拉菜单
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
+            }
+
+            // 应用已保存的设置
+            GameSettings.ApplyAll();
+        }
+
+        private void OnBGMVolumeChanged(float value)
+        {
+            GameSettings.BGMVolume = value;
+            GameSettings.Save();
+            AudioListener.volume = GameSettings.BGMVolume;
+        }
+
+        private void OnSFXVolumeChanged(float value)
+        {
+            GameSettings.SFXVolume = value;
+            GameSettings.Save();
+        }
+
+        private void OnResolutionChanged(int index)
+        {
+            GameSettings.ApplyResolution(index);
+            GameSettings.Save();
         }
     }
 }
